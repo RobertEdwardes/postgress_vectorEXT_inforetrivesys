@@ -1,0 +1,30 @@
+<!-- search_app/templates/search_app/search_form.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search</title>
+</head>
+<body>
+    <h1>Search</h1>
+    <form method="post" action="{% url 'search' %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Search">
+    </form>
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    <footer>
+        <ul>
+            <li><a href="{% url 'bulk_upload' %}">Bulk Upload</a></li>
+            <li><a href="{% url 'view_uploads' %}">View Files</a></li>
+            <li><a href="{% url 'search' %}">Search</a></li>
+        </ul>
+    </footer>
+    
+</body>
+</html>
