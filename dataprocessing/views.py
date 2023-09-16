@@ -5,6 +5,7 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 from .forms import FileUploadForm
 from .models import FileUpload, Files
+from dataprocessing.tasks import text_to_embed
 from django.contrib import messages
 
 import fitz 
@@ -81,67 +82,7 @@ def delete_selected_records(selected_ids, request):
         except FileUpload.DoesNotExist:
             logger.error(f'Missing file --- file ID: {id} --- Location: {file_path}')
 
-def process_selected_records(selected_ids, request):
-    user_id = str(request.user.id)
+async def process_selected_records(selected_ids, request):
     for id in selected_ids:
-        try:
-            file_upload = FileUpload.objects.get(id=id, processed=False)
-        except FileUpload.DoesNotExist:
-            continue
-        file_extension = os.path.splitext(file_upload.file.name)[1].lower()
-        if file_extension == '.pdf':
-            text = pdf_to_text(file_upload.file.path)  
-        elif file_extension == '.txt':
-            text = txt_to_string(file_upload.file.path)  
-        elif file_extension == '.docx':
-            text = docx_to_text(file_upload.file.path)  
-        else:
-            logger.warn(f'file type not supported --- ID: {id} --- Name: {file_upload.file.name}')
-            messages.warning(request,f'file type not supported Name: {file_upload.file.name}')
-            continue
-
-        logger.debug(f'file ID : {id} --- First 100 char : {text[:100]} --- Last 100 char : {text[-100:]}')    
-        
-        sentences = sent_tokenize(text)
-
-        for sentence_pos, sentence_text in enumerate(sentences):
-
-            embed_text = model.encode(sentence_text)
-            Files.objects.create(
-                idx_file=file_upload,
-                sentence_pos=sentence_pos,
-                sentence_text=sentence_text,
-                sentence_embed=embed_text
-            )
-        file_upload.processed = True
-        logger.info(f'User ID : {request.user.id} --- processed : {file_upload.file.path} --- sentence count : {len(sentences)}')
-        file_upload.save()
-
-def pdf_to_text(pdf_file_path):
-    try:
-        doc = fitz.open(pdf_file_path)
-        text = ""
-        for page_num in range(doc.page_count):
-            page = doc.load_page(page_num)
-            text += page.get_text()
-        return text
-    except Exception as e:
-        logging.error(f'PDF to String --- {str(e)}')
-
-def txt_to_string(txt_file_path):
-    try:
-        with open(txt_file_path, 'r', encoding='utf-8') as file:
-            text = file.read()
-        return text
-    except Exception as e:
-        logging.error(f'Text to String --- {str(e)}')
-
-def docx_to_text(docx_file_path):
-    try:
-        doc = Document(docx_file_path)
-        text = ""
-        for paragraph in doc.paragraphs:
-            text += paragraph.text
-        return text
-    except Exception as e:
-        logging.error(f'Docx to String --- {str(e)}')
+        result = text_to_embed.delay(id)
+        logger.debug(result)
