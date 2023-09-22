@@ -38,7 +38,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_celery_results',
     'dataprocessing.apps.DataprocessingConfig',
     'searchend.apps.SearchendConfig',
 ]
@@ -112,17 +111,18 @@ DATABASES = {
         'NAME': os.environ.get('POSTGRES_NAME'),
         'USER': os.environ.get('POSTGRES_USER'),
         'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
-        'HOST': 'db',
+        'HOST': 'localhost',
         'PORT': 5432,
     }
 }
 
-CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq//' # RabbitMQ broker URL
+CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq//'
 
-CELERY_RESULT_BACKEND = 'rpc://'
-
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-
+#: Only add pickle to this list if your broker is secured
+#: from unwanted access (see userguide/security.html)
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_RESULT_BACKEND = 'db+sqlite:///results.sqlite'
+CELERY_TASK_SERIALIZER = 'json'
 
 
 MEDIA_URL = '/media/'

@@ -58,8 +58,11 @@ def view_uploads(request):
             return redirect('view_uploads') 
         elif action == 'process':
             logger.info(f'user ID: {request.user.id} --- processing: {len(selected_records)}')
-            process_selected_records(selected_records, request)
-            return redirect('view_uploads') 
+            status_bool = process_selected_records(selected_records, request)
+            if status_bool:
+                return redirect('view_uploads') 
+            else:
+                messages.warning(request, 'Failed to save to Database Please contact Admin')
 
     file_list = FileUpload.objects.all().order_by('-uploaded_at')
     paginator = Paginator(file_list, 10)  
@@ -82,7 +85,53 @@ def delete_selected_records(selected_ids, request):
         except FileUpload.DoesNotExist:
             logger.error(f'Missing file --- file ID: {id} --- Location: {file_path}')
 
-async def process_selected_records(selected_ids, request):
+def process_selected_records(selected_ids, request):
+    logger.debug(selected_ids)
     for id in selected_ids:
-        result = text_to_embed.delay(id)
-        logger.debug(result)
+        try:
+            file_upload = FileUpload.objects.get(id=id, processed=False)
+        except FileUpload.DoesNotExist:
+            return
+        file_extension = os.path.splitext(file_upload.file.name)[1].lower()
+        if file_extension == '.pdf':
+            text = pdf_to_text(file_upload.file.path)  
+        elif file_extension == '.txt':
+            text = txt_to_string(file_upload.file.path)  
+        elif file_extension == '.docx':
+            text = docx_to_text(file_upload.file.path)  
+        else:
+            return
+
+        sentences = sent_tokenize(text)
+
+        for sentence_pos, sentence_text in enumerate(sentences):
+
+            embed_text = model.encode(sentence_text)
+            Files.objects.create(
+                idx_file=file_upload,
+                sentence_pos=sentence_pos,
+                sentence_text=sentence_text,
+                sentence_embed=embed_text
+            )
+        file_upload.processed = True
+        file_upload.save()
+
+def pdf_to_text(pdf_file_path):
+    doc = fitz.open(pdf_file_path)
+    text = ""
+    for page_num in range(doc.page_count):
+        page = doc.load_page(page_num)
+        text += page.get_text()
+    return text
+
+def txt_to_string(txt_file_path):
+    with open(txt_file_path, 'r', encoding='utf-8') as file:
+        text = file.read()
+    return text
+
+def docx_to_text(docx_file_path):
+    doc = Document(docx_file_path)
+    text = ""
+    for paragraph in doc.paragraphs:
+        text += paragraph.text
+    return text
