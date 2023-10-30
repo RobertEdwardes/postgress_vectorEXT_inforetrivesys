@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: postgres-container
+    networks:
+      - postgres-net
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: your-prod-db-name
+      POSTGRES_USER: your-prod-db-user
+      POSTGRES_PASSWORD: your-prod-db-password
+
+networks:
+  postgres-net:
