@@ -11,9 +11,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: your-local-db-name
-      POSTGRES_USER: your-local-db-user
-      POSTGRES_PASSWORD: your-local-db-password
+      POSTGRES_DB: local_db
+      POSTGRES_USER: root_replace
+      POSTGRES_PASSWORD: root_replace
 
 networks:
   postgres-net:
