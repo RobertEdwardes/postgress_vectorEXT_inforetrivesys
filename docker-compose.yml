@@ -7,33 +7,31 @@ services:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-  rabbitmq:
-    image: "rabbitmq:management"
-    ports:
-      - "5672:5672"  # RabbitMQ default port
-      - "15672:15672"  # RabbitMQ management plugin port
-    environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
-  web:
-    build: .
+  web1: 
+    build: ./biz 
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - .:/code
+      - ./biz:/code
     ports:
       - "8000:8000"
     environment:
-      - POSTGRES_NAME=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - DJANGO_DB_HOST=db
+      - DJANGO_DB_NAME=project1_db
+      - DJANGO_DB_USER=project1_user
+      - DJANGO_DB_PASSWORD=project1_password
     depends_on:
       - db
-      - rabbitmq
-  worker:
-    build: .
-    command: celery -A irsystem worker -l info
+  web2: 
+    build: ./gpumicro  
+    command: python manage.py runserver 0.0.0.0:8001
     volumes:
-      - .:/code
+      - ./project2:/gpumicro
+    ports:
+      - "8001:8000"
+    environment:
+      - DJANGO_DB_HOST=db
+      - DJANGO_DB_NAME=project2_db
+      - DJANGO_DB_USER=project2_user
+      - DJANGO_DB_PASSWORD=project2_password
     depends_on:
       - db
-      - rabbitmq

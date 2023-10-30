@@ -8,4 +8,3 @@ torch
 transformers
 sentence_transformers
 sqlalchemy
-celery>=5.0,<6.0
