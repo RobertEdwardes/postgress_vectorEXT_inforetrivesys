@@ -1,19 +1,21 @@
-version: '3'
-
 services:
   postgres:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: postgres-container
-    networks:
-      - postgres-net
-    ports:
-      - "5432:5432"
+    container_name: postgres_site_prod
+    image: ankane/pgvector
     environment:
-      POSTGRES_DB: prod_db
-      POSTGRES_USER: root_replace
-      POSTGRES_PASSWORD: root_replace
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PW}
+      - POSTGRES_DB=${POSTGRES_DB} #optional (specify default database instead of $POSTGRES_DB)
+    ports:
+      - "0.0.0.0:5432:5432"
+    restart: always
 
-networks:
-  postgres-net:
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_MAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PW}
+    ports:
+      - - "0.0.0.0:5050:80"
+    restart: always

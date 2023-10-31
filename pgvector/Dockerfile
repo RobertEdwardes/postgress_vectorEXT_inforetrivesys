@@ -1,8 +1,8 @@
 FROM ankane/pgvector
 
-ENV POSTGRES_DB=your-db-name
-ENV POSTGRES_USER=your-db-user
-ENV POSTGRES_PASSWORD=your-db-password
+ENV POSTGRES_DB=db_replace
+ENV POSTGRES_USER=root_replace
+ENV POSTGRES_PASSWORD=root_replace
 
 EXPOSE 5432
 
